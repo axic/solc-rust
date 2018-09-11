@@ -12,3 +12,4 @@ keywords = ["ethereum", "solidity"]
 
 [build-dependencies]
 bindgen = "0.40.0"
+cmake = "0.1"

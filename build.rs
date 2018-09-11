@@ -1,12 +1,18 @@
 extern crate bindgen;
+extern crate cmake;
+
+use cmake::Config;
 
 use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
-    println!("cargo:rustc-link-lib=solc");
+    let dst = Config::new("solidity")
+        .define("TESTS", "OFF")
+        .define("TOOLS", "OFF")
+        .build();
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=solc");
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
