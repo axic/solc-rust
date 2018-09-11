@@ -12,7 +12,16 @@ fn main() {
         .define("TOOLS", "OFF")
         .build();
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/libsolc", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/libsolidity", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/libevmasm", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/libdevcore", dst.display());
+    println!("cargo:rustc-link-search=native={}/build/deps/lib", dst.display());
     println!("cargo:rustc-link-lib=static=solc");
+    println!("cargo:rustc-link-lib=static=solidity");
+    println!("cargo:rustc-link-lib=static=evmasm");
+    println!("cargo:rustc-link-lib=static=devcore");
+    println!("cargo:rustc-link-lib=static=jsoncpp");
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
