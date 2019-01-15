@@ -23,6 +23,11 @@ fn main() {
     println!("cargo:rustc-link-lib=static=devcore");
     println!("cargo:rustc-link-lib=static=jsoncpp");
 
+    println!("cargo:rustc-link-search=/usr/lib/");
+    println!("cargo:rustc-link-lib=boost_system");
+    println!("cargo:rustc-link-lib=boost_filesystem");
+    println!("cargo:rustc-link-lib=boost_regex");
+
     // We need to link against C++ std lib
     if let Some(cpp_stdlib) = get_cpp_stdlib() {
         println!("cargo:rustc-link-lib={}", cpp_stdlib);
