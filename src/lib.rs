@@ -19,13 +19,18 @@ pub fn license() -> String {
     }
 }
 
-// FIXME support read callback
-pub fn compile(input: String) -> String {
+pub trait ReadCallback<'a> {
+//    fn read(input: &'a str) -> &'a str;
+    fn read(input: String) -> String where Self: Sized;
+    // where Self: Sized;;
+}
+
+pub fn compile(input: String, callback: Option<ReadCallback>) -> String {
     let input_cstr = CString::new(input).expect("input expected");
     unsafe {
         CStr::from_ptr(native::solidity_compile(
             input_cstr.as_ptr() as *const i8,
-            None,
+            callback,
         ))
         .to_string_lossy()
         .into_owned()
