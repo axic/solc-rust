@@ -9,6 +9,12 @@ pub fn version() -> String {
     }
 }
 
+pub fn license() -> String {
+    unsafe {
+        CStr::from_ptr(native::solidity_license()).to_string_lossy().into_owned()
+    }
+}
+
 // FIXME support read callback
 pub fn compile(input: String) -> String {
     let input_cstr = CString::new(input).expect("input expected");
@@ -20,11 +26,15 @@ pub fn compile(input: String) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::mem;
 
     #[test]
     fn test_version() {
         assert_ne!(version().len(), 0);
+    }
+
+    #[test]
+    fn test_license() {
+        assert_ne!(license().len(), 0);
     }
 
     #[test]
