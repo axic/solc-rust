@@ -5,7 +5,7 @@ use std::ffi::CStr;
 
 pub fn version() -> String {
     unsafe {
-        CStr::from_ptr(native::version()).to_string_lossy().into_owned()
+        CStr::from_ptr(native::solidity_version()).to_string_lossy().into_owned()
     }
 }
 
@@ -13,7 +13,7 @@ pub fn version() -> String {
 pub fn compile(input: String) -> String {
     let input_cstr = CString::new(input).expect("input expected");
     unsafe {
-        CStr::from_ptr(native::compileStandard(input_cstr.as_ptr() as *const i8, None)).to_string_lossy().into_owned()
+        CStr::from_ptr(native::solidity_compile(input_cstr.as_ptr() as *const i8, None)).to_string_lossy().into_owned()
     }
 }
 
