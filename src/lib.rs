@@ -1,17 +1,21 @@
 mod native;
 
-use std::ffi::CString;
 use std::ffi::CStr;
+use std::ffi::CString;
 
 pub fn version() -> String {
     unsafe {
-        CStr::from_ptr(native::solidity_version()).to_string_lossy().into_owned()
+        CStr::from_ptr(native::solidity_version())
+            .to_string_lossy()
+            .into_owned()
     }
 }
 
 pub fn license() -> String {
     unsafe {
-        CStr::from_ptr(native::solidity_license()).to_string_lossy().into_owned()
+        CStr::from_ptr(native::solidity_license())
+            .to_string_lossy()
+            .into_owned()
     }
 }
 
@@ -19,7 +23,12 @@ pub fn license() -> String {
 pub fn compile(input: String) -> String {
     let input_cstr = CString::new(input).expect("input expected");
     unsafe {
-        CStr::from_ptr(native::solidity_compile(input_cstr.as_ptr() as *const i8, None)).to_string_lossy().into_owned()
+        CStr::from_ptr(native::solidity_compile(
+            input_cstr.as_ptr() as *const i8,
+            None,
+        ))
+        .to_string_lossy()
+        .into_owned()
     }
 }
 
@@ -39,6 +48,6 @@ mod tests {
 
     #[test]
     fn test_compile() {
-       assert_ne!(compile("".to_string()).len(), 0);
+        assert_ne!(compile("".to_string()).len(), 0);
     }
 }

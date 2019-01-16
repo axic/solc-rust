@@ -15,14 +15,21 @@ fn main() {
         .build();
 
     for lib in vec!["solc", "solidity", "yul", "langutil", "evmasm", "devcore"] {
-        println!("cargo:rustc-link-search=native={}/build/lib{}", dst.display(), lib);
+        println!(
+            "cargo:rustc-link-search=native={}/build/lib{}",
+            dst.display(),
+            lib
+        );
         println!("cargo:rustc-link-lib=static={}", lib);
     }
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
 
     // jsoncpp dependency
-    println!("cargo:rustc-link-search=native={}/build/deps/lib", dst.display());
+    println!(
+        "cargo:rustc-link-search=native={}/build/deps/lib",
+        dst.display()
+    );
     println!("cargo:rustc-link-lib=static=jsoncpp");
 
     println!("cargo:rustc-link-search=/usr/lib/");
