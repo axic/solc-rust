@@ -13,20 +13,16 @@ fn main() {
         .define("USE_Z3", "OFF")
         .define("USE_CVC4", "OFF")
         .build();
+
+    for lib in vec!["solc", "solidity", "yul", "langutil", "evmasm", "devcore"] {
+        println!("cargo:rustc-link-search=native={}/build/lib{}", dst.display(), lib);
+        println!("cargo:rustc-link-lib=static={}", lib);
+    }
+
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/libsolc", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/libsolidity", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/libyul", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/liblangutil", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/libevmasm", dst.display());
-    println!("cargo:rustc-link-search=native={}/build/libdevcore", dst.display());
+
+    // jsoncpp dependency
     println!("cargo:rustc-link-search=native={}/build/deps/lib", dst.display());
-    println!("cargo:rustc-link-lib=static=solc");
-    println!("cargo:rustc-link-lib=static=solidity");
-    println!("cargo:rustc-link-lib=static=yul");
-    println!("cargo:rustc-link-lib=static=langutil");
-    println!("cargo:rustc-link-lib=static=evmasm");
-    println!("cargo:rustc-link-lib=static=devcore");
     println!("cargo:rustc-link-lib=static=jsoncpp");
 
     println!("cargo:rustc-link-search=/usr/lib/");
