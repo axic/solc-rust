@@ -3,16 +3,30 @@
 //! # Example
 //! ```
 //! pub fn main() {
+//!     // This is an optional callback.
+//!     let callback = |data: &str| -> Result<String, String> {
+//!         if data == "file_i_have.sol" {
+//!             Ok("contract C { function f() {} }".to_string())
+//!         } else {
+//!             Err("I don't have that file.".to_string())
+//!         }
+//!     };
 //!     // Let input be a valid "Standard Solidity Input JSON"
 //!     let input = "{}";
-//!     let output = solc::compile(&input);
+//!     let output = solc::compile(&input, Some(callback));
 //!     assert_ne!(output.len(), 0);
 //! }
 
 mod native;
 
+#[macro_use]
+extern crate lazy_static;
+
+use std::ffi::c_void;
 use std::ffi::CStr;
 use std::ffi::CString;
+use std::os::raw::c_char;
+use std::sync::Mutex;
 
 /// Returns the compiler version string.
 pub fn version() -> String {
@@ -32,18 +46,83 @@ pub fn license() -> String {
     }
 }
 
-/// Compile using a valid JSON input and return a JSON output.
-// FIXME support read callback
-pub fn compile(input: &str) -> String {
-    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
-    unsafe {
-        CStr::from_ptr(native::solidity_compile(
-            input_cstr.as_ptr() as *const i8,
-            None,
-        ))
-        .to_string_lossy()
-        .into_owned()
+trait CopyToSolidity {
+    unsafe fn to_solidity(&self) -> *mut c_char;
+}
+
+impl CopyToSolidity for String {
+    unsafe fn to_solidity(&self) -> *mut c_char {
+        let len = self.len();
+        // FIXME: use libsolc's exported malloc
+        let ptr = libc::malloc(len);
+        // Don't assert on memory allocation failure
+        if ptr != std::ptr::null_mut() {
+            std::ptr::copy(self.as_ptr(), ptr as *mut u8, len);
+        }
+        ptr as *mut c_char
     }
+}
+
+/// Read callback for the compiler asking for more input. The input argument is the filename
+/// and the callback returns either the result or an error string.
+pub type ReadCallback = fn(&str) -> Result<String, String>;
+
+lazy_static! {
+    static ref CALLBACK: Mutex<Option<ReadCallback>> = Mutex::new(None);
+}
+
+fn callback_set(callback: Option<ReadCallback>) {
+    *CALLBACK.lock().expect("Expected to acquire callback mutex") = callback;
+}
+
+fn callback_get() -> Option<ReadCallback> {
+    *CALLBACK.lock().expect("Expected to acquire callback mutex")
+}
+
+unsafe extern "C" fn callback_wrapper(
+    data: *const c_char,
+    contents: *mut *mut c_char,
+    error: *mut *mut c_char,
+) {
+    let cb = callback_get();
+
+    let ret = if cb.is_some() {
+        assert!(data != std::ptr::null());
+
+        let data = CStr::from_ptr(data)
+            .to_str()
+            .expect("non-UTF8 data received");
+
+        Some(cb.unwrap()(&data))
+    } else {
+        None
+    };
+
+    if let Some(ret) = ret {
+        // Callback was found.
+        if ret.is_err() {
+            *error = ret.err().expect("error").to_solidity();
+        } else {
+            *contents = ret.ok().expect("result").to_solidity();
+        }
+        return;
+    }
+
+    // This means the callback was not supported (or provided)
+    *contents = std::ptr::null_mut::<c_char>();
+    *error = std::ptr::null_mut::<c_char>();
+}
+
+/// Compile using a valid JSON input and return a JSON output.
+pub fn compile(input: &str, callback: Option<ReadCallback>) -> String {
+    callback_set(callback);
+
+    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
+    let ret_raw_ptr = unsafe {
+        native::solidity_compile(input_cstr.as_ptr() as *const i8, Some(callback_wrapper))
+    };
+
+    unsafe { CStr::from_ptr(ret_raw_ptr).to_string_lossy().into_owned() }
 }
 
 #[cfg(test)]
@@ -62,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_compile_smoke() {
-        assert_ne!(compile("").len(), 0);
+        assert_ne!(compile("", None).len(), 0);
     }
 
     #[test]
@@ -84,7 +163,7 @@ mod tests {
           }
         }
         "#;
-        let output = compile(&input);
+        let output = compile(&input, None);
         // TODO: parse JSON and do a better job here
         assert_eq!(output.find("\"severity\":\"error\"").is_none(), true);
         assert_eq!(output.find("\"object\":\"").is_some(), true);
@@ -110,9 +189,42 @@ mod tests {
           }
         }
         "#;
-        let output = compile(&input);
+        let output = compile(&input, None);
         // TODO: parse JSON and do a better job here
         assert_eq!(output.find("\"severity\":\"error\"").is_none(), false);
         assert_eq!(output.find(" not found: ").is_some(), true);
+    }
+
+    #[test]
+    fn test_compile_callback() {
+        let callback = |data: &str| -> Result<String, String> {
+            if data == "d.sol" {
+                Ok("contract D { function f() {} }".to_string())
+            } else {
+                Err("File not found.".to_string())
+            }
+        };
+        let input = r#"
+        {
+          "language": "Solidity",
+          "settings": {
+            "outputSelection": {
+              "*": {
+                "*": [ "evm.bytecode", "evm.gasEstimates" ]
+              }
+            }
+          },
+          "sources": {
+            "c.sol": {
+              "content": "import \"d.sol\"; contract C is D { function g() public { } function h() internal {} }"
+            }
+          }
+        }
+        "#;
+        let output = compile(&input, Some(callback));
+        println!("{}", output);
+        assert_eq!(output.find("\"severity\":\"error\"").is_none(), true);
+        assert_eq!(output.find("\"object\":\"").is_some(), true);
+        assert_eq!(output.find(" CODECOPY ").is_some(), true);
     }
 }
