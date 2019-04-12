@@ -36,14 +36,18 @@ pub fn license() -> String {
 // FIXME support read callback
 pub fn compile(input: &str) -> String {
     let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
-    unsafe {
+    let output = unsafe {
         CStr::from_ptr(native::solidity_compile(
             input_cstr.as_ptr() as *const i8,
             None,
         ))
         .to_string_lossy()
         .into_owned()
+    };
+    unsafe {
+        native::solidity_free();
     }
+    output
 }
 
 #[cfg(test)]
