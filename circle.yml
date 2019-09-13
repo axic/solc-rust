@@ -1,0 +1,41 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: rust:1-buster
+    steps:
+      - checkout
+      - run:
+          name: Update submodules
+          command: |
+             git submodule update --init
+      - run:
+          name: Install libclang
+          command: |
+            apt update
+            apt -y install libclang-dev clang cmake libboost-all-dev
+            rustup component add rustfmt
+            rustup update
+      - run:
+          name: Update rustc
+          command: |
+            rustup component add rustfmt
+            rustup update
+            cargo --version
+            rustc --version
+      - run:
+           name: Check formatting
+           command: |
+             rustfmt --version
+             cargo fmt --all -- --check
+      - run:
+          name: Build
+          # Building the C++ binding can take longer than 10 mins.
+          no_output_timeout: 45m
+          command: |
+             cargo build -j4 --release -vv
+      - run:
+          name: Test
+          command: |
+             cargo test -j4
