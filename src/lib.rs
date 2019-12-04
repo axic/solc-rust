@@ -20,8 +20,8 @@ pub fn license() -> String {
 }
 
 // FIXME support read callback
-pub fn compile(input: String) -> String {
-    let input_cstr = CString::new(input).expect("input expected");
+pub fn compile(input: &str) -> String {
+    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
     unsafe {
         CStr::from_ptr(native::solidity_compile(
             input_cstr.as_ptr() as *const i8,
@@ -48,6 +48,6 @@ mod tests {
 
     #[test]
     fn test_compile() {
-        assert_ne!(compile("".to_string()).len(), 0);
+        assert_ne!(compile("").len(), 0);
     }
 }
