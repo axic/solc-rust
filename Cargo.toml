@@ -6,7 +6,8 @@ authors = ["Alex Beregszaszi <alex@rtfs.hu>"]
 license = "GPL-3.0"
 repository = "https://github.com/axic/solc-rust"
 homepage = "https://github.com/axic/solc-rust"
-keywords = ["ethereum", "solidity"]
+keywords = ["ethereum", "solidity", "external-ffi-bindings"]
+edition = "2018"
 
 [dependencies]
 
