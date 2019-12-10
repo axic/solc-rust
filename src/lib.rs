@@ -47,7 +47,58 @@ mod tests {
     }
 
     #[test]
-    fn test_compile() {
+    fn test_compile_smoke() {
         assert_ne!(compile("").len(), 0);
+    }
+
+    #[test]
+    fn test_compile_single() {
+        let input = r#"
+        {
+          "language": "Solidity",
+          "settings": {
+            "outputSelection": {
+              "*": {
+                "*": [ "evm.bytecode", "evm.gasEstimates" ]
+              }
+            }
+          },
+          "sources": {
+            "c.sol": {
+              "content": "contract C { function g() public { } function h() internal {} }"
+            }
+          }
+        }
+        "#;
+        let output = compile(&input);
+        // TODO: parse JSON and do a better job here
+        assert_eq!(output.find("\"severity\":\"error\"").is_none(), true);
+        assert_eq!(output.find("\"object\":\"").is_some(), true);
+        assert_eq!(output.find(" CODECOPY ").is_some(), true);
+    }
+
+    #[test]
+    fn test_compile_multi_missing() {
+        let input = r#"
+        {
+          "language": "Solidity",
+          "settings": {
+            "outputSelection": {
+              "*": {
+                "*": [ "evm.bytecode", "evm.gasEstimates" ]
+              }
+            }
+          },
+          "sources": {
+            "c.sol": {
+              "content": "import \"d.sol\"; contract C { function g() public { } function h() internal {} }"
+            }
+          }
+        }
+        "#;
+        let output = compile(&input);
+        // TODO: parse JSON and do a better job here
+        assert_eq!(output.find("\"severity\":\"error\"").is_none(), false);
+        assert_eq!(output.find(" not found: ").is_some(), true);
     }
 }
