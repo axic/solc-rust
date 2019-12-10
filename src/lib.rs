@@ -1,8 +1,20 @@
+//! Rust bindings for the Solidity compiler.
+//!
+//! # Example
+//! ```
+//! pub fn main() {
+//!     // Let input be a valid "Standard Solidity Input JSON"
+//!     let input = "{}";
+//!     let output = solc::compile(&input);
+//!     assert_ne!(output.len(), 0);
+//! }
+
 mod native;
 
 use std::ffi::CStr;
 use std::ffi::CString;
 
+/// Returns the compiler version string.
 pub fn version() -> String {
     unsafe {
         CStr::from_ptr(native::solidity_version())
@@ -11,6 +23,7 @@ pub fn version() -> String {
     }
 }
 
+/// Returns the complete license text.
 pub fn license() -> String {
     unsafe {
         CStr::from_ptr(native::solidity_license())
@@ -19,6 +32,7 @@ pub fn license() -> String {
     }
 }
 
+/// Compile using a valid JSON input and return a JSON output.
 // FIXME support read callback
 pub fn compile(input: &str) -> String {
     let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");

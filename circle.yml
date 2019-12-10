@@ -39,3 +39,7 @@ jobs:
           name: Test
           command: |
              cargo test -j4
+      - run:
+          name: Rustdoc
+          command: |
+             cargo doc -j4
