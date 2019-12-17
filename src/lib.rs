@@ -47,7 +47,7 @@ pub fn license() -> String {
 //    }
     "A".to_string()
 }
-
+/*
 trait CopyToSolidity {
     unsafe fn to_solidity(&self) -> *mut c_char;
 }
@@ -65,6 +65,7 @@ impl CopyToSolidity for String {
         ptr as *mut c_char
     }
 }
+*/
 
 //unsafe fn from_solidity(
 
@@ -127,13 +128,17 @@ let cb: Option<ReadCallback> = None;
 pub fn compile(input: &str, callback: Option<ReadCallback>) -> String {
 //    callback_set(callback);
 
-//    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
-//    let ret_raw_ptr = unsafe {
-//        native::solidity_compile(input_cstr.as_ptr() as *const i8, Some(callback_wrapper))
-//    };
+    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
+//    let input_cstr = input_cstr.into_raw();
     let ret_raw_ptr = unsafe {
-        native::solidity_compile(input.as_ptr() as *const i8, None) //Some(callback_wrapper))
+//        native::solidity_compile(input_cstr.as_ptr() as *const i8, Some(callback_wrapper))
+        native::solidity_compile(input_cstr.as_ptr() as *const i8, None)
+//        native::solidity_compile(input_cstr as *const i8, None)
     };
+//    unsafe { CString::from_raw(input_cstr); }
+//    let ret_raw_ptr = unsafe {
+//        native::solidity_compile(input.as_ptr() as *const i8, None) //Some(callback_wrapper))
+//    };
 
 //    unsafe {
 //        let ret_cstr = CStr::from_ptr(ret_raw_ptr);
@@ -240,7 +245,7 @@ mod tests {
         }
         "#;
         let output = compile(&input, Some(callback));
-        println!("{}", output);
+        println!("output: {}", output);
         assert_eq!(output.find("\"severity\":\"error\"").is_none(), true);
         assert_eq!(output.find("\"object\":\"").is_some(), true);
         assert_eq!(output.find(" CODECOPY ").is_some(), true);
