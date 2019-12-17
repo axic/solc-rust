@@ -115,4 +115,30 @@ mod tests {
         assert_eq!(output.find("\"severity\":\"error\"").is_none(), false);
         assert_eq!(output.find(" not found: ").is_some(), true);
     }
+
+    #[test]
+    fn test_compile_callback() {
+        let input = r#"
+        {
+          "language": "Solidity",
+          "settings": {
+            "outputSelection": {
+              "*": {
+                "*": [ "evm.bytecode", "evm.gasEstimates" ]
+              }
+            }
+          },
+          "sources": {
+            "c.sol": {
+              "content": "import \"d.sol\"; contract C is D { function g() public { } function h() internal {} }"
+            }
+          }
+        }
+        "#;
+        let output = compile(&input);
+        println!("output: {}", output);
+        assert_eq!(output.find("\"severity\":\"error\"").is_some(), true);
+        assert_eq!(output.find("\"object\":\"").is_none(), true);
+        assert_eq!(output.find(" CODECOPY ").is_none(), true);
+    }
 }
