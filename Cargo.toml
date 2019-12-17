@@ -10,8 +10,8 @@ keywords = ["ethereum", "solidity", "external-ffi-bindings"]
 edition = "2018"
 
 [dependencies]
-lazy_static = "1.4"
-libc = "0.2"
+#lazy_static = "1.4"
+#libc = "0.2"
 
 [build-dependencies]
 bindgen = "0.52.0"

@@ -19,8 +19,8 @@
 
 mod native;
 
-#[macro_use]
-extern crate lazy_static;
+//#[macro_use]
+//extern crate lazy_static;
 
 use std::ffi::c_void;
 use std::ffi::CStr;
@@ -30,20 +30,22 @@ use std::sync::Mutex;
 
 /// Returns the compiler version string.
 pub fn version() -> String {
-    unsafe {
-        CStr::from_ptr(native::solidity_version())
-            .to_string_lossy()
-            .into_owned()
-    }
+//    unsafe {
+//        CStr::from_ptr(native::solidity_version())
+//            .to_string_lossy()
+//            .into_owned()
+//    }
+    "A".to_string()
 }
 
 /// Returns the complete license text.
 pub fn license() -> String {
-    unsafe {
-        CStr::from_ptr(native::solidity_license())
-            .to_string_lossy()
-            .into_owned()
-    }
+//    unsafe {
+//        CStr::from_ptr(native::solidity_license())
+//            .to_string_lossy()
+//            .into_owned()
+//    }
+    "A".to_string()
 }
 
 trait CopyToSolidity {
@@ -54,7 +56,8 @@ impl CopyToSolidity for String {
     unsafe fn to_solidity(&self) -> *mut c_char {
         let len = self.len();
         // FIXME: use libsolc's exported malloc
-        let ptr = libc::malloc(len);
+//        let ptr = libc::malloc(len);
+	let ptr = std::ptr::null_mut();
         // Don't assert on memory allocation failure
         if ptr != std::ptr::null_mut() {
             std::ptr::copy(self.as_ptr(), ptr as *mut u8, len);
@@ -63,10 +66,13 @@ impl CopyToSolidity for String {
     }
 }
 
+//unsafe fn from_solidity(
+
 /// Read callback for the compiler asking for more input. The input argument is the filename
 /// and the callback returns either the result or an error string.
 pub type ReadCallback = fn(&str) -> Result<String, String>;
 
+/*
 lazy_static! {
     static ref CALLBACK: Mutex<Option<ReadCallback>> = Mutex::new(None);
 }
@@ -78,13 +84,15 @@ fn callback_set(callback: Option<ReadCallback>) {
 fn callback_get() -> Option<ReadCallback> {
     *CALLBACK.lock().expect("Expected to acquire callback mutex")
 }
-
+*/
+/*
 unsafe extern "C" fn callback_wrapper(
     data: *const c_char,
     contents: *mut *mut c_char,
     error: *mut *mut c_char,
 ) {
-    let cb = callback_get();
+let cb: Option<ReadCallback> = None;
+//    let cb = callback_get();
 
     let ret = if cb.is_some() {
         assert!(data != std::ptr::null());
@@ -99,6 +107,7 @@ unsafe extern "C" fn callback_wrapper(
     };
 
     if let Some(ret) = ret {
+        println!("Callback was found");
         // Callback was found.
         if ret.is_err() {
             *error = ret.err().expect("error").to_solidity();
@@ -112,17 +121,26 @@ unsafe extern "C" fn callback_wrapper(
     *contents = std::ptr::null_mut::<c_char>();
     *error = std::ptr::null_mut::<c_char>();
 }
+*/
 
 /// Compile using a valid JSON input and return a JSON output.
 pub fn compile(input: &str, callback: Option<ReadCallback>) -> String {
-    callback_set(callback);
+//    callback_set(callback);
 
-    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
+//    let input_cstr = CString::new(input).expect("CString failed (input contains a 0 byte?)");
+//    let ret_raw_ptr = unsafe {
+//        native::solidity_compile(input_cstr.as_ptr() as *const i8, Some(callback_wrapper))
+//    };
     let ret_raw_ptr = unsafe {
-        native::solidity_compile(input_cstr.as_ptr() as *const i8, Some(callback_wrapper))
+        native::solidity_compile(input.as_ptr() as *const i8, None) //Some(callback_wrapper))
     };
 
-    unsafe { CStr::from_ptr(ret_raw_ptr).to_string_lossy().into_owned() }
+//    unsafe {
+//        let ret_cstr = CStr::from_ptr(ret_raw_ptr);
+//        let ret = ret_cstr.to_string_lossy().into_owned();
+//        ret
+//    }
+    "Hello".to_string()
 }
 
 #[cfg(test)]
